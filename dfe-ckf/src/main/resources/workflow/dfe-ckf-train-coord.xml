@@ -1,0 +1,59 @@
+<coordinator-app name="${JOB_NAME}_COORDINATOR"
+                 frequency="${coord:days(freqDays)}"
+                 start="${startTime}"
+                 end="${endTime}"
+                 timezone="UTC"
+                 xmlns="uri:oozie:coordinator:0.2">
+    <controls>
+        <timeout>${coordinatorTimeout}</timeout>
+        <concurrency>${concurrency}</concurrency>
+    </controls>
+    <datasets>
+        <!--  Dependency of  data generated from "rnn/gbm" workflow is available based on properties Done Flag -->
+        <dataset name="inputDataSetAIR" frequency="${coord:days(7)}"
+                 initial-instance="${startTimeAIRDoneFlag}" timezone="UTC">
+            <uri-template>${nameNode}/common/demandforecasting/ready/${YEAR}/${MONTH}/${DAY}
+            </uri-template>
+            <done-flag>${DONE_AIR_FLAG}</done-flag>
+        </dataset>
+        <dataset name="inputDataSetStrSls" frequency="${coord:days(1)}"
+                 initial-instance="${startTime}" timezone="UTC">
+            <uri-template>${nameNode}/common/demandforecasting/ready/${YEAR}/${MONTH}/${DAY}
+            </uri-template>
+            <done-flag>${DONE_STRSLS_FLAG}</done-flag>
+        </dataset>
+        <dataset name="outputDataSet" frequency="${coord:days(1)}"
+                 initial-instance="${startTime}" timezone="UTC">
+            <uri-template>${nameNode}/common/demandforecasting/ready/${YEAR}/${MONTH}/${DAY}
+            </uri-template>
+        </dataset>
+    </datasets>
+    <input-events>
+        <data-in name="inputDataAIR" dataset="inputDataSetAIR">
+            <instance>${coord:current(-1)}</instance>
+        </data-in>
+        <data-in name="inputDataStrSls" dataset="inputDataSetStrSls">
+            <instance>${coord:current(-1)}</instance>
+        </data-in>
+    </input-events>
+    <output-events>
+        <data-out name="outputData" dataset="outputDataSet">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+    <action>
+        <workflow>
+            <app-path>${appWorkflowPath}</app-path>
+            <configuration>
+                <property>
+                    <name>currDateTime</name>
+                    <value>${coord:formatTime(coord:dateOffset(coord:nominalTime(), 0, 'DAY'), "yyyyMMddHHmm")}</value>
+                </property>
+                <property>
+                    <name>outputFlagDir</name>
+                    <value>${coord:dataOut("outputData")}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

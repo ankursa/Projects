@@ -1,0 +1,2 @@
+dept_id,obs_var,feature_set_key,beta,p_value,q_value,r_value
+20002,sls_unit_q,bts_hols,0.01,0.01,0.001,0.001

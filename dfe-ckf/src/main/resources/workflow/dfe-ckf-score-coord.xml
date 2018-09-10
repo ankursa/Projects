@@ -1,0 +1,51 @@
+<coordinator-app name="${JOB_NAME}_COORDINATOR"
+                 frequency="${coord:days(freqDays)}"
+                 start="${startTime}"
+                 end="${endTime}"
+                 timezone="UTC"
+                 xmlns="uri:oozie:coordinator:0.2">
+    <controls>
+        <timeout>${coordinatorTimeout}</timeout>
+        <concurrency>${concurrency}</concurrency>
+    </controls>
+    <datasets>
+        <!--  Dependency of  data generated from "rnn/gbm" workflow is available based on properties Done Flag -->
+        <dataset name="inputDataSet" frequency="${coord:days(1)}"
+                 initial-instance="${startTime}" timezone="UTC">
+            <uri-template>${nameNode}/common/demandforecasting/ready/${YEAR}/${MONTH}/${DAY}
+            </uri-template>
+            <done-flag>${DONE_FLAG}</done-flag>
+        </dataset>
+
+        <dataset name="outputDataSet" frequency="${coord:days(1)}"
+                 initial-instance="${startTime}" timezone="UTC">
+            <uri-template>${nameNode}/common/demandforecasting/ready/${YEAR}/${MONTH}/${DAY}
+            </uri-template>
+        </dataset>
+    </datasets>
+    <input-events>
+        <data-in name="inputData" dataset="inputDataSet">
+            <instance>${coord:current(0)}</instance>
+        </data-in>
+    </input-events>
+    <output-events>
+        <data-out name="outputData" dataset="outputDataSet">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+    <action>
+        <workflow>
+            <app-path>${appWorkflowPath}</app-path>
+            <configuration>
+                <property>
+                    <name>RELEASE_DATE</name>
+                    <value>${coord:formatTime(coord:nominalTime(), 'yyyy-MM-dd')}</value>
+                </property>
+                <property>
+                    <name>outputFlagDir</name>
+                    <value>${coord:dataOut("outputData")}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>
